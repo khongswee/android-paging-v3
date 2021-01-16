@@ -11,6 +11,7 @@ import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.kho.pagedv3.core.model.DataUser
 import com.kho.pagedv3.databinding.MainFragmentBinding
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -18,6 +19,7 @@ class MainFragment : Fragment() {
     private val viewModel: MainViewModel by viewModel()
     private lateinit var binding: MainFragmentBinding
     private val pagedAdapter: UserListPagedAdapter by lazy { UserListPagedAdapter(this::onClickItem) }
+    private var searchJob: Job? = null
 
     companion object {
         const val STATE_DATA_EMPTY = 0
@@ -41,6 +43,7 @@ class MainFragment : Fragment() {
         initRecyclerView()
         initRefresh()
         loadData()
+        observeInitialLoadState()
     }
 
     private fun setState(state: Int, messageError: String = "") {
@@ -74,17 +77,20 @@ class MainFragment : Fragment() {
     }
 
     private fun loadData() {
-        lifecycleScope.launchWhenCreated {
+        searchJob?.cancel()
+        searchJob = lifecycleScope.launchWhenCreated {
             viewModel.fetchData().collectLatest {
                 setState(STATE_HAS_DATA)
                 pagedAdapter.submitData(it)
             }
         }
 
+    }
+
+    private fun observeInitialLoadState(){
         viewModel.liveDataInitialLoadData.observe(viewLifecycleOwner) {
             setState(it.first,it.second)
         }
-
     }
 
     private fun onClickItem(data: DataUser) {

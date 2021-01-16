@@ -61,7 +61,7 @@ dependencies {
     // or Koin for Android Fragment Factory (unstable version)
     implementation "org.koin:koin-androidx-fragment:2.2.0"
 
-    implementation "androidx.paging:paging-runtime:3.0.0-alpha11"
+    implementation "androidx.paging:paging-runtime-ktx:3.0.0-alpha11"
 
     testImplementation 'junit:junit:4.13.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'

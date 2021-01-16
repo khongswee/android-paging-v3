@@ -12,36 +12,34 @@ class UserPagingSource(
     private val query: String
 ) : PagingSource<Int, DataUser>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, DataUser> {
-        val position = params.key ?: 1
+        val page = params.key ?: 1
         return try {
-            /*
-             if the api can search, it will send param query like this and pass into your service.
-             */
-            val response = service.getUser(position.toString())
+            val response = service.getUser(page.toString())
             val repos = response.await().data
-            if (position == 1 && repos.isNullOrEmpty()) {
+            if (page == 1 && repos.isNullOrEmpty()) {
                 emptyCallBack.invoke()
             }
-            val nextKey = if (repos.isEmpty()) {
-                null
-            } else {
-                position + (params.loadSize / 20)
-            }
+            val nextKey = if (repos.isEmpty()) null else page.plus(1)
+            val prevKey = if (page == 1) null else page.minus(1)
             LoadResult.Page(
                 data = repos,
-                prevKey = if (position == 1) null else position - 1,
+                prevKey = prevKey,
                 nextKey = nextKey
             )
         } catch (exception: IOException) {
-            if (position == 1) {
+            if (page == 1) {
                 errorCallBack.invoke(exception.localizedMessage)
             }
             return LoadResult.Error(exception)
         } catch (exception: HttpException) {
-            if (position == 1) {
+            if (page == 1) {
                 errorCallBack.invoke(exception.localizedMessage)
             }
             return LoadResult.Error(exception)
         }
+    }
+
+    companion object {
+        private const val INITIAL_PAGE = 1
     }
 }
